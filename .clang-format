@@ -1,0 +1,131 @@
+---
+BasedOnStyle: Google
+ColumnLimit: 100
+
+---
+Language: Cpp
+
+AccessModifierOffset: -2
+
+AlignAfterOpenBracket: Align
+AlignConsecutiveMacros: true
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Right
+AlignOperands: true
+AlignTrailingComments: true
+
+AllowAllArgumentsOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: true
+
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations: Yes
+
+BinPackArguments: true
+BinPackParameters: true
+
+# this might be the same as WebKit?
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterCaseLabel: false
+    AfterClass: false
+    AfterControlStatement: false
+    AfterEnum: false
+    AfterFunction: true
+    AfterNamespace: false
+    AfterStruct: false
+    AfterUnion: false
+    AfterExternBlock: false
+    BeforeCatch: false
+    BeforeElse: false
+    IndentBraces: false
+    SplitEmptyFunction: false
+    SplitEmptyRecord: false
+    SplitEmptyNamespace: false
+
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakStringLiterals: true
+
+# CommentPragmas: '^ IWYU pragma:'
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+
+FixNamespaceComments: true
+
+# ForEachMacros:
+#     - ''
+# MacroBlockBegin:
+#     - ''
+# MacroBlockEnd:
+#     - ''
+# NamespaceMacros:
+#     - ''
+# StatementMacros:
+#     - ''
+# TypenameMacros:
+#     - ''
+
+SortIncludes: true
+IncludeBlocks: Regroup
+IncludeCategories:
+    - Regex: '^<ext/.*\.h>' # ?
+      Priority: 1
+    - Regex: '^<.*\.h>'     # C system headers
+      Priority: 2
+    - Regex: '^<.*>'        # C++ standard library headers
+      Priority: 3
+    - Regex: '^"extern/.*"' # external dependency headers
+      Priority: 4
+    - Regex: '^".*"'        # project headers
+      Priority: 5
+IncludeIsMainRegex: '([-_](test|bench|impl))?$'
+
+IndentCaseLabels: false
+IndentPPDirectives: BeforeHash
+IndentWidth: 2
+IndentWrappedFunctionNames: false
+
+MaxEmptyLinesToKeep: 1
+
+NamespaceIndentation: Inner
+
+# Penalty* options...
+
+PointerAlignment: Left
+
+SortUsingDeclarations: true
+
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+
+SpacesBeforeTrailingComments: 2
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+Standard: Cpp11
+
+TabWidth: 2
+UseTab: Never 
