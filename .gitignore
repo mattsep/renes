@@ -1,3 +1,11 @@
+build/*
+
+# VSCode files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
 # Prerequisites
 *.d
 
