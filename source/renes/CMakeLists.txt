@@ -10,4 +10,4 @@ foreach(file ${FILES})
 endforeach()
 
 add_library(renes-lib STATIC ${SOURCES})
-target_include_directories(renes-lib PUBLIC ${CMAKE_SOURCE_DIR}/source/)
+target_include_directories(renes-lib PUBLIC ${CMAKE_SOURCE_DIR}/source)
