@@ -5,9 +5,10 @@
 
 namespace renes {
 
-using u8 = std::uint8_t;
-using u16 = std::uint16_t;
+using byte_t = std::uint8_t;
+using addr_t = std::uint16_t;
 
+using std::size_t;
 using std::string;
 
 // forward declarations

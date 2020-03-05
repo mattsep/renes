@@ -7,9 +7,21 @@ namespace renes {
 
 class Cpu {
 public:
-  struct CpuInfo;
+  struct CpuStatus {
+    bool carry = false;
+    bool zero = false;
+    bool irq_disabled = false;
+    bool decimal_mode = false;
+    bool software_interrupt = false;
+    bool unused = true; // bit 5 is unused, but is typically set 
+    bool overflow = false;
+    bool negative = false;
 
-  enum class CpuState : u8 {
+    byte_t Pack();
+    void Unpack(byte_t flags);
+  };
+
+  enum class CpuState : byte_t {
     Unknown,
     Decode,
     Read,
@@ -22,56 +34,34 @@ public:
 
   void Step();
 
-  CpuInfo ProbeState() const;
+  CpuStatus GetStatus() const;
 
 private:
-  using MicroOp = void (Cpu::*)(u16);
+  using MicroOp = void (Cpu::*)(addr_t);
 
   // --------------------------------------------
   // Private member variables
   // --------------------------------------------
 
-  // devices
-  Bus& bus_;
+  Bus& bus_;  // main bus
 
-  // registers
-  u16 pc_;  // program counter
-  u8 a_;    // accumulator
-  u8 x_;    // x-index register
-  u8 y_;    // y-index register
-  u8 s_;    // stack pointer
-  u8 p_;    // processor status flags
+  addr_t pc_;  // program counter
 
-  // current state
-  u8 opcode_;
-  u8 data_;
-  CpuState state_;
-  MicroOp instruction_seq_[16] = {&Decode};
+  byte_t a_;  // accumulator
+  byte_t x_;  // x-index register
+  byte_t y_;  // y-index register
+  byte_t s_;  // stack pointer
+
+  CpuStatus flags_;  // processor status flags
+  CpuState state_;   // whether the CPU is in read or write mode for this cycle
 
   // --------------------------------------------
   // Private functions
   // --------------------------------------------
 
-  void SetCarry(bool set);
-  void SetZero(bool set);
-  void SetIrqDisabled(bool set);
-  void SetDecimalMode(bool set);
-  void SetSoftwareInterrupt(bool set);
-  void SetOverflow(bool set);
-  void SetNegative(bool set);
-  
-  bool Carry();
-  bool Zero();
-  bool IrqDisabled();
-  bool DecimalMode();
-  bool SoftwareInterrupt();
-  bool Overflow();
-  bool Negative();
-
-  void Decode(u16);
-  void Read(u16 addr);
-  void Write(u16 addr);
-
+  void Decode();
+  byte_t Read(addr_t addr);
+  void Write(addr_t addr, byte_t value);
 };
 
 }  // namespace renes
