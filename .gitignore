@@ -2,9 +2,8 @@ build/*
 
 # VSCode files
 .vscode/*
+!.vscode/c_cpp_preferences.json
 !.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
 
 # Prerequisites
 *.d

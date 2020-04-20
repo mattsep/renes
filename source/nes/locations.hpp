@@ -1,8 +1,8 @@
 #pragma once
 
-#include "renes/Common.hpp"
+#include "nes/common.hpp"
 
-namespace renes::locations {
+namespace nes::locations {
 
 constexpr addr_t ppu_ctrl = 0x2000;
 constexpr addr_t ppu_mask = 0x2001;
@@ -47,4 +47,4 @@ constexpr addr_t nmi_vector = 0xFFFA;
 constexpr addr_t reset_vector = 0xFFFC;
 constexpr addr_t irq_vector = 0xFFFE;
 
-}  // namespace renes::locations
+}  // namespace nes::locations

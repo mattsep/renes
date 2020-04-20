@@ -32,14 +32,13 @@ AlwaysBreakTemplateDeclarations: Yes
 BinPackArguments: true
 BinPackParameters: true
 
-# this might be the same as WebKit?
 BreakBeforeBraces: Custom
 BraceWrapping:
     AfterCaseLabel: false
     AfterClass: false
     AfterControlStatement: false
     AfterEnum: false
-    AfterFunction: true
+    AfterFunction: false
     AfterNamespace: false
     AfterStruct: false
     AfterUnion: false
