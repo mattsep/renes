@@ -10,10 +10,10 @@ template <class Console>
 class Application : public wxApp {
 public:
   Application() = default;
-  Application(Console const* console) : m_console{console} {}
+  Application(Console* console) : m_console{console} {}
 
 private:
-  Console const* m_console = nullptr;
+  Console* m_console = nullptr;
   MainWindow* m_main_window = nullptr;
 
   auto OnInit() -> bool override {
@@ -31,6 +31,11 @@ private:
     m_main_window->Show();
 
     return true;
+  }
+
+  auto OnExit() -> int override {
+    m_console->PowerOff();
+    return 0;
   }
 };
 

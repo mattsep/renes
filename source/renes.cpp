@@ -7,7 +7,7 @@
 
 wxIMPLEMENT_APP_NO_MAIN(gui::Application<nes::Console>);
 
-void RunGui(int argc, char* argv[], bool* running, nes::Console const* console);
+void RunGui(int argc, char* argv[], bool* running, nes::Console* console);
 void RunNes(int argc, char* argv[], bool* running, nes::Console* console);
 
 int main(int argc, char* argv[]) {
@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 
-void RunGui(int argc, char* argv[], bool* running, nes::Console const* console) {
+void RunGui(int argc, char* argv[], bool* running, nes::Console* console) {
   auto app = new gui::Application{console};
   wxApp::SetInstance(app);
   wxEntry(argc, argv);

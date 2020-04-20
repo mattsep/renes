@@ -19,7 +19,7 @@ public:
   }
 
   auto Run() -> int {
-    while (true) {
+    while (m_running) {
       m_cpu.Step();
       m_ppu.Step();
       m_ppu.Step();
@@ -29,6 +29,8 @@ public:
     return 0;
   }
 
+  void PowerOff() { m_running = false; }
+
   // read-only access to internal components
   auto GetCpu() const -> Cpu const& { return m_cpu; }
   auto GetPpu() const -> Ppu const& { return m_ppu; }
@@ -36,6 +38,7 @@ public:
   auto GetDisplay() const -> Display const& { return m_display; }
 
 private:
+  bool m_running = true;
   Cpu m_cpu = {};
   Ppu m_ppu = {};
   MainBus m_main_bus = {};
