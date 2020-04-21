@@ -16,7 +16,7 @@ public:
     m_game_screen->SetPixelBuffer(pixel_buffer);
 
     auto sizer = new wxFlexGridSizer{2, 2, 0, 0};
-    sizer->Add(m_game_screen, wxALL | wxALIGN_CENTER | wxFIXED_MINSIZE | wxSHAPED);
+    sizer->Add(m_game_screen, wxSizerFlags().Shaped().Border(wxALL, 4));
 
     MakeFileMenu();
     MakeToolsMenu();
@@ -32,7 +32,7 @@ private:
   wxMenu* m_file_menu;
   wxMenu* m_tools_menu;
   GameScreen* m_game_screen;
-  wxListBox* m_list_box;
+  // wxListBox* m_list_box;
 
   void MakeFileMenu() {
     m_file_menu = new wxMenu();
@@ -74,8 +74,8 @@ private:
     event.Skip();
   }
 
-  void OnToolsViewCpuRegisters(wxCommandEvent& event) {}
-  void OnToolsViewCpuInstructions(wxCommandEvent& event) {}
+  void OnToolsViewCpuRegisters([[maybe_unused]] wxCommandEvent& event) {}
+  void OnToolsViewCpuInstructions([[maybe_unused]] wxCommandEvent& event) {}
 };
 
 }  // namespace gui

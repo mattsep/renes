@@ -7,3 +7,4 @@
 #include "nes/display.hpp"
 #include "nes/locations.hpp"
 #include "nes/utility.hpp"
+#include "nes/logger.hpp"

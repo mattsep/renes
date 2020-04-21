@@ -95,7 +95,7 @@ private:
   static void WriteToStream(Messages&&... messages) {
     std::lock_guard lock{m_mutex};
     std::ostream out(m_buf);
-    (out << ... << CallIfNeeded(std::forward<Messages>(messages)));
+    (out << ... << CallIfNeeded(std::forward<Messages>(messages))) << '\n';
   }
 
   template <class Expr>

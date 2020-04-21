@@ -18,6 +18,8 @@ public:
     m_ppu.AttachDisplay(&m_display);
   }
 
+  void Load([[maybe_unused]] string filename) {}
+
   auto Run() -> int {
     while (m_running) {
       m_cpu.Step();

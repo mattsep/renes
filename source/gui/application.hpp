@@ -17,17 +17,15 @@ private:
   MainWindow* m_main_window = nullptr;
 
   auto OnInit() -> bool override {
-    using byte = unsigned char;
-
     wxInitAllImageHandlers();
 
     // yes, the const_cast makes me uncomfortable too... unfortunately, the wxImage constructor
     // (used later) requires a pointer to non-const unsigned chars, even though it should only need
     // read access to the data
-    auto& pixel_buffer = m_console->GetDisplay().GetPixelBuffer();
-    auto* raw_pixels = const_cast<byte*>(reinterpret_cast<byte const*>(pixel_buffer.data()));
+    using Display = std::remove_cv_t<std::remove_reference_t<decltype(m_console->GetDisplay())>>;
+    auto* pixel_buffer = const_cast<Display&>(m_console->GetDisplay()).GetRawPixelBuffer();
 
-    m_main_window = new MainWindow{raw_pixels};
+    m_main_window = new MainWindow{pixel_buffer};
     m_main_window->Show();
 
     return true;

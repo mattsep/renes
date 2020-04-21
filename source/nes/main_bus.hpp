@@ -18,7 +18,7 @@ public:
   MainBus() = default;
 
   auto AttachCartridge(Cartridge* cartridge) { m_cartridge = AssumeNotNull(cartridge); }
-  auto AttachPpuBus(PpuBus* ppu_bus) { m_ppu_bus = AssumeNotNull(ppu_bus); }
+  auto AttachPpu(Ppu* ppu) { m_ppu = AssumeNotNull(ppu); }
 
   auto Read(addr_t addr) const -> byte_t {
     auto ptr = MapAddress(addr);
@@ -39,7 +39,7 @@ public:
   }
 
 private:
-  PpuBus* m_ppu_bus = nullptr;
+  Ppu* m_ppu = nullptr;
   Cartridge* m_cartridge = nullptr;
   std::array<byte_t, 0x0800> m_ram;
 

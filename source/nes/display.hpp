@@ -30,24 +30,36 @@ private:
 
 class Display {
 public:
-  constexpr auto Size() { return std::array{m_width, m_height}; }
-  constexpr auto Width() { return m_width; }
-  constexpr auto Height() { return m_height; }
+  static constexpr auto Size() { return std::array{m_width, m_height}; }
+  static constexpr auto Width() { return m_width; }
+  static constexpr auto Height() { return m_height; }
 
-  auto const& GetPixelBuffer() const { return m_pixels; }
-
-  auto operator()(int x, int y) -> Pixel&{
-    assert(x >= 0 && x < m_width);
-    assert(y >= 0 && y < m_height);
-
-    auto index = x + m_width * y;
-    return m_pixels[index];
+  void DrawPixel(size_t x, size_t y, Pixel pixel) {
+    if (auto index = GetIndex(x, y); index < m_pixels.size()) { m_pixels[index] = pixel; }
   }
 
+  auto ReadPixel(size_t x, size_t y) -> Pixel {
+    if (auto index = GetIndex(x, y); index < m_pixels.size()) {
+      return m_pixels[GetIndex(x, y)];
+    } else {
+      return {};
+    }
+  }
+
+  auto GetRawPixelBuffer() -> byte_t* { return reinterpret_cast<byte_t*>(m_pixels.data()); }
+
 private:
-  static constexpr int m_width = 256;
-  static constexpr int m_height = 240;
+  static constexpr size_t m_width = 256;
+  static constexpr size_t m_height = 240;
   std::array<Pixel, m_width* m_height> m_pixels = {};
+
+  auto GetIndex(size_t x, size_t y) const -> size_t {
+    if (x < m_width && y < m_height) {
+      return x + m_width * y;
+    } else {
+      return m_pixels.size();
+    }
+  }
 };
 
 }  // namespace nes

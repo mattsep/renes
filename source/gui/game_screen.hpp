@@ -9,26 +9,29 @@ class GameScreen : public wxPanel {
   wxDECLARE_EVENT_TABLE();
 
 public:
-  GameScreen(wxFrame* parent) : wxPanel{parent, wxID_ANY, wxDefaultPosition, {256, 240}} {}
+  GameScreen(wxFrame* parent) : wxPanel{parent, wxID_ANY, wxDefaultPosition, {256, 240}} {
+    SetMinSize({256, 240});
+  }
+    
 
-  void SetPixelBuffer(unsigned char* pixel_buffer) { m_pixels = pixel_buffer; }
+  void SetPixelBuffer(unsigned char* pixel_buffer) { m_pixel_buffer = pixel_buffer; }
 
-  void OnPaint(wxPaintEvent& event) {
-    if (m_pixels == nullptr) return;
+  void OnPaint([[maybe_unused]] wxPaintEvent& event) {
+    if (m_pixel_buffer == nullptr) return;
 
     auto [w, h] = GetSize();
-    wxBitmap bitmap{wxImage{256, 240, m_pixels, true}.Scale(w, h)};
+    wxBitmap bitmap{wxImage{256, 240, m_pixel_buffer, true}.Scale(w, h)};
     wxBufferedPaintDC dc(this, bitmap);
   }
 
   void OnEraseBackground(wxEraseEvent&) {}
-  void OnIdle(wxIdleEvent& event) {
+  void OnIdle([[maybe_unused]] wxIdleEvent& event) {
     Refresh(false);
     wxMilliSleep(16);
   }
 
 private:
-  unsigned char* m_pixels;
+  unsigned char* m_pixel_buffer;
 };
 
 // clang-format off
