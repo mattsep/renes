@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "-DRENES_ENABLE_LOGGING"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "intelliSenseMode": "clang-x64",
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}
