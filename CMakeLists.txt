@@ -5,6 +5,8 @@ project(renes
     VERSION 0.1.0
 )
 
+option(RENES_ENABLE_LOGGING "Enable ReNES logging" ON)
+
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Threads REQUIRED)
@@ -23,3 +25,13 @@ target_link_libraries(gui-lib INTERFACE ${wxWidgets_LIBRARIES})
 
 add_executable(renes source/renes.cpp)
 target_link_libraries(renes PRIVATE nes-lib gui-lib Threads::Threads)
+target_compile_options(renes PRIVATE
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+        -Wall -Wextra -Wconversion -Wsign-conversion -pedantic-errors>
+    $<$<CXX_COMPILER_ID:MSVC>:
+        /WX /W4>
+)
+
+if(RENES_ENABLE_LOGGING)
+    target_compile_definitions(renes PRIVATE -DRENES_ENABLE_LOGGING)
+endif()
