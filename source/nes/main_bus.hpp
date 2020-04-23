@@ -6,35 +6,43 @@
 #include "nes/cartridge.hpp"
 #include "nes/common.hpp"
 #include "nes/locations.hpp"
-#include "nes/ppu_bus.hpp"
+#include "nes/ppu.hpp"
 #include "nes/utility.hpp"
 
 namespace nes {
 
 class MainBus {
-  friend class PpuBus;
-
 public:
   MainBus() = default;
 
   auto AttachCartridge(Cartridge* cartridge) { m_cartridge = AssumeNotNull(cartridge); }
   auto AttachPpu(Ppu* ppu) { m_ppu = AssumeNotNull(ppu); }
 
-  auto Read(addr_t addr) const -> byte_t {
-    auto ptr = MapAddress(addr);
-    if (ptr) {
-      return *ptr;
+  auto Read(addr_t addr) -> byte_t {
+    if (addr < 0x2000) {
+      addr %= 0x0800;
+      return m_ram[addr];
+    } else if (addr < 0x4000) {
+      ReadFromPpuRegister(addr);
+    } else if (addr < 0x4020) {
+      // TODO: Access APU and Joystick registers
     } else {
-      throw std::runtime_error{"Invalid address passed to MainBus::Read()."};
+      // TODO: return m_cartridge->Read(addr);
     }
+
+    return 0;
   }
 
   void Write(addr_t addr, byte_t value) {
-    auto ptr = MapAddress(addr);
-    if (ptr) {
-      *ptr = value;
+    if (addr < 0x2000) {
+      addr %= 0x0800;
+      m_ram[addr] = value;
+    } else if (addr < 0x4000) {
+      WriteToPpuRegister(addr, value);
+    } else if (addr < 0x4020) {
+      // TODO: Access APU and Joystick registers
     } else {
-      throw std::runtime_error{"Invalid address passed to MainBus::Write()."};
+      // TODO: m_cartridge->Write(addr, value);
     }
   }
 
@@ -43,37 +51,33 @@ private:
   Cartridge* m_cartridge = nullptr;
   std::array<byte_t, 0x0800> m_ram;
 
-  auto MapAddress(addr_t addr) -> byte_t* {
-    byte_t* ptr = nullptr;
-    if (addr < 0x2000) {
-      addr &= 0x07FF;
-      ptr = &m_ram[addr];
-    } else if (addr < 0x4000) {
-      ptr = MapPpuAddress(addr);
-    }
-
-    return ptr;
-  }
-
-  auto MapAddress(addr_t addr) const -> byte_t const* {
-    return const_cast<MainBus&>(*this).MapAddress(addr);
-  }
-
-  auto MapPpuAddress(addr_t addr) const -> byte_t* {
-    assert(addr >= 0x2000 && addr < 0x4000);
-
-    addr = 0x2000 + (addr & 0x0007);
+  auto ReadFromPpuRegister(addr_t addr) -> byte_t {
+    addr = 0x2000 + (addr % 8);
     switch (addr) {
-      case locations::ppu_ctrl:
-      case locations::ppu_mask:
-      case locations::ppu_status:
-      case locations::oam_addr:
-      case locations::oam_data:
-      case locations::ppu_scroll:
-      case locations::ppu_addr:
-      case locations::ppu_data:
-      default:
-        return nullptr;
+    case locations::ppu_ctrl: return m_ppu->m_reg.control;
+    case locations::ppu_mask: return m_ppu->m_reg.mask;
+    case locations::ppu_status: return m_ppu->m_reg.status;
+    case locations::oam_addr: return m_ppu->m_reg.oam_address;
+    case locations::oam_data: return m_ppu->m_reg.oam_data;
+    case locations::ppu_scroll: return m_ppu->m_reg.scroll;
+    case locations::ppu_addr: return m_ppu->m_reg.address;
+    case locations::ppu_data: return m_ppu->m_reg.data;
+    default: throw std::runtime_error("The impossible has happened");
+    }
+  }
+
+  void WriteToPpuRegister(addr_t addr, byte_t value) {
+    addr = 0x2000 + (addr % 8);
+    switch (addr) {
+    case locations::ppu_ctrl: m_ppu->m_reg.control = value;
+    case locations::ppu_mask: m_ppu->m_reg.mask = value;
+    case locations::ppu_status: m_ppu->m_reg.status = value;
+    case locations::oam_addr: m_ppu->m_reg.oam_address = value;
+    case locations::oam_data: m_ppu->m_reg.oam_data = value;
+    case locations::ppu_scroll: m_ppu->m_reg.scroll = value;
+    case locations::ppu_addr: m_ppu->m_reg.address = value;
+    case locations::ppu_data: m_ppu->m_reg.data = value;
+    default: throw std::runtime_error("The impossible has happened");
     }
   }
 };

@@ -14,7 +14,7 @@
 
 namespace nes {
 
-enum class LogLevel : int { None = 0, Error, Warning, Info, Debug, Trace, All, Default = Info };
+enum class LogLevel : int { None = 0, Error, Warn, Info, Debug, Trace, All, Default = Info };
 
 #if !defined(RENES_ENABLE_LOGGING)
 
@@ -31,7 +31,7 @@ public:
   static void Trace(...) {}
   static void Debug(...) {}
   static void Info(...) {}
-  static void Warning(...) {}
+  static void Warn(...) {}
   static void Error(...) {}
 };
 
@@ -76,7 +76,7 @@ public:
   }
 
   template <class... Messages>
-  static void Warning(Messages&&... messages) {
+  static void Warn(Messages&&... messages) {
     if (m_level >= 2) WriteToStream("[WARN ] : ", std::forward<Messages>(messages)...);
   }
 

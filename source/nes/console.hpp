@@ -7,6 +7,7 @@
 #include "nes/display.hpp"
 #include "nes/main_bus.hpp"
 #include "nes/ppu.hpp"
+#include "nes/ppu_bus.hpp"
 
 namespace nes {
 
@@ -14,7 +15,9 @@ class Console {
 public:
   Console() {
     m_main_bus.AttachCartridge(&m_cartridge);
+    m_main_bus.AttachPpu(&m_ppu);
     m_cpu.AttachBus(&m_main_bus);
+    m_ppu.AttachBus(&m_ppu_bus);
     m_ppu.AttachDisplay(&m_display);
   }
 
@@ -44,6 +47,7 @@ private:
   Cpu m_cpu = {};
   Ppu m_ppu = {};
   MainBus m_main_bus = {};
+  PpuBus m_ppu_bus = {};
   Cartridge m_cartridge = {};
   Display m_display = {};
 };
