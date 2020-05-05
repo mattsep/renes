@@ -67,7 +67,7 @@ public:
     case OpMode::AbsoluteX: assembly += Hexify(addr) + ",X"; break;
     case OpMode::AbsoluteY: assembly += Hexify(addr) + ",Y"; break;
     case OpMode::Immediate: assembly += '#' + Hexify(addr); break;
-    case OpMode::Implied: assembly += "(implied)"; break;
+    case OpMode::Implied: assembly += "(imp)"; break;
     case OpMode::Indirect: assembly += '(' + Hexify(lo) + ')'; break;
     case OpMode::IndirectX: assembly += '(' + Hexify(lo) + ",X)"; break;
     case OpMode::IndirectY: assembly += '(' + Hexify(lo) + "),Y"; break;

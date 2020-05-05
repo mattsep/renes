@@ -10,7 +10,7 @@ public:
   auto CpuRead(addr_t addr) -> byte_t {
     if (addr < 0x8000) return 0;
     else {
-      addr -= (addr >= 0x4000 && m_prg_rom.size() == 0x10000) ? 0xC000 : 0x8000;
+      addr -= (addr >= 0x4000 && m_prg_rom.size() == 0x4000) ? 0xC000 : 0x8000;
       return m_prg_rom[addr];
     }
   }
