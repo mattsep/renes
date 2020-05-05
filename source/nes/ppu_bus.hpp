@@ -11,8 +11,8 @@ namespace nes {
 class PpuBus {
 public:
 private:
-  // std::array<byte_t, 0x2000> pattern_tables;
-  // std::array<byte_t, 0x1000> name_tables;
+  [[maybe_unused]] std::array<byte_t, 0x2000> m_pattern_tables;
+  [[maybe_unused]] std::array<byte_t, 0x1000> m_name_tables;
 
 };
 

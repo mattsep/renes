@@ -49,7 +49,7 @@ public:
   void AttachDisplay(Display* display) { m_display = AssumeNotNull(display); }
 
   void Step() {
-    LOG_TRACE("\tcurrent pixel: " + std::to_string(m_col) + ", " + std::to_string(m_row));
+    LOG_TRACE("[PPU] current pixel: " + std::to_string(m_col) + ", " + std::to_string(m_row));
 
     // TODO: this is just a placeholder draw statement
     if (m_row < Row::max / 2) {
@@ -85,8 +85,8 @@ private:
   Display* m_display = nullptr;
   uint m_row = 261;
   uint m_col = 0;
-  // std::array<byte_t, 256> m_oam;
   bool m_frame_odd = false;
+  [[maybe_unused]] std::array<byte_t, 256> m_oam;
 
   void MoveDot() {
     if (++m_col > Col::max) {
@@ -98,11 +98,8 @@ private:
     }
   }
 
-  auto VBlank() -> bool { return m_reg.status & (1u << 7); }
-  void VBlank(bool set) {
-    auto x = static_cast<unsigned>(set);
-    m_reg.status = static_cast<byte_t>((m_reg.status & ~(1u << 7)) | (x << 7));
-  }
+  auto VBlank() const -> bool { return TestBit(m_reg.status, 7); }
+  void VBlank(bool set) { set ? SetBit(m_reg.status, 7) : ClearBit(m_reg.status, 7); }
 
   void RenderCycle() {
     if (m_col == 0) return;  // idle cycle

@@ -19,6 +19,7 @@ class Nes;
 class Cpu;
 class Ppu;
 class MainBus;
+class Mapper;
 class PpuBus;
 class Cartridge;
 class Mapper;

@@ -27,29 +27,59 @@ public:
     m_reg.a = 0;
     m_reg.x = 0;
     m_reg.y = 0;
-    m_reg.s = 0xFD;
+    m_reg.s = 0xFF;
     m_reg.p = 0x20;
+    m_reg.pc = locations::reset_vector;
 
-    auto addr = locations::reset_vector;
-    m_reg.pc = 0;
-    m_reg.pc |= Read(addr++) << 0;
-    m_reg.pc |= Read(addr++) << 4;
+    m_opinfo = optable[0];  // BRK instruction
+    m_cycles = m_opinfo.cycles;
   }
 
   void Step() {
     // TODO: Handle interrupts
-
-    if (m_cycles == 0) {
-      Decode();
-    } else if (m_cycles == 1) {
-      // TODO: Execute current instruction
+    switch (m_cycles) {
+    case 2: PrepareInstruction(); break;
+    case 1:
       (this->*m_op)(m_addr, m_data);
+      ;
+      break;
+    case 0: Decode(); break;
     }
 
     --m_cycles;
   }
 
   auto GetRegisters() const -> Registers const& { return m_reg; }
+
+  auto GetOpInfo() -> OpInfo { return m_opinfo; }
+
+  auto GetOpAssembly() -> string {
+    auto assembly = string{};
+    assembly.reserve(16);
+    assembly += Hexify(m_opinfo.address) + ' ' + m_opinfo.name + ' ';
+
+    auto lo = Read(m_opinfo.address + 1);
+    auto hi = Read(m_opinfo.address + 2);
+    auto addr = JoinBytes(lo, hi);
+
+    switch (m_opinfo.mode) {
+    case OpMode::Absolute: assembly += Hexify(addr); break;
+    case OpMode::AbsoluteX: assembly += Hexify(addr) + ",X"; break;
+    case OpMode::AbsoluteY: assembly += Hexify(addr) + ",Y"; break;
+    case OpMode::Immediate: assembly += '#' + Hexify(addr); break;
+    case OpMode::Implied: assembly += "(implied)"; break;
+    case OpMode::Indirect: assembly += '(' + Hexify(lo) + ')'; break;
+    case OpMode::IndirectX: assembly += '(' + Hexify(lo) + ",X)"; break;
+    case OpMode::IndirectY: assembly += '(' + Hexify(lo) + "),Y"; break;
+    case OpMode::Relative: [[fallthrough]];
+    case OpMode::ZeroPage: assembly += Hexify(lo); break;
+    case OpMode::ZeroPageX: assembly += Hexify(lo) + ",X"; break;
+    case OpMode::ZeroPageY: assembly += Hexify(lo) + ",Y"; break;
+    default: throw std::runtime_error("The impossible has happened");
+    }
+
+    return assembly;
+  }
 
 private:
   using Op = void (Cpu::*)(addr_t, byte_t);
@@ -68,14 +98,18 @@ private:
 
   void Decode() {
     m_opinfo = optable[Fetch()];
+    m_opinfo.address = m_reg.pc - 1;
+
     m_cycles = m_opinfo.cycles;
 
-    PrepareInstruction();
+    LOG_TRACE("[CPU] Instruction: " + GetOpAssembly());
   }
 
   auto Read(addr_t addr) -> byte_t { return m_bus->Read(addr); }
   void Write(addr_t addr, byte_t value) { m_bus->Write(addr, value); }
   auto Fetch() -> byte_t { return m_bus->Read(m_reg.pc++); }
+
+  auto ReadAddress(addr_t addr) -> addr_t { return JoinBytes(Read(addr), Read(addr + 1)); }
 
   void Push(byte_t a) {
     Write(0x0100 + m_reg.s, a);
@@ -129,7 +163,7 @@ private:
 
   void Indirect(addr_t x = 0, addr_t y = 0) {
     auto arg = Fetch();
-    auto a = static_cast<addr_t>(Read((arg + x) & 0xFF) | (Read((arg + x + 1) & 0xFF) << 8));
+    auto a = JoinBytes(Read((arg + x) & 0xFF), Read((arg + x + 1) & 0xFF));
     auto b = static_cast<addr_t>(a + y);
     if (m_opinfo.slow_on_page_cross && PageCrossed(a, b)) { ++m_cycles; }
     m_addr = b;
@@ -157,7 +191,7 @@ private:
 
   // --------------------------------------------
   // Instruction preparation
-  // --------------------------------------------  
+  // --------------------------------------------
 
   void PrepareInstruction() {
     switch (m_opinfo.mode) {
@@ -299,10 +333,7 @@ private:
     Push(lo);
     Push(m_reg.p);
     BreakSet(true);
-    addr = locations::reset_vector;
-    m_reg.pc = 0;
-    m_reg.pc |= Read(addr++) << 0;
-    m_reg.pc |= Read(addr++) << 4;
+    m_reg.pc = ReadAddress(locations::reset_vector);
   }
 
   void Bvc([[maybe_unused]] addr_t addr, [[maybe_unused]] byte_t data) { Branch(!Overflow()); }
@@ -372,7 +403,7 @@ private:
     Push(lo);
     lo = Fetch();
     hi = Fetch();
-    m_reg.pc = static_cast<addr_t>(lo | (hi << 8));
+    m_reg.pc = JoinBytes(lo, hi);
   }
 
   void Lda([[maybe_unused]] addr_t addr, [[maybe_unused]] byte_t data) {
@@ -456,13 +487,13 @@ private:
     m_reg.p = Pull();
     auto lo = Pull();
     auto hi = Pull();
-    m_reg.pc = static_cast<addr_t>(lo | (hi << 8));
+    m_reg.pc = JoinBytes(lo, hi);
   }
-  
+
   void Rts([[maybe_unused]] addr_t addr, [[maybe_unused]] byte_t data) {
     auto lo = Pull();
     auto hi = Pull();
-    m_reg.pc = static_cast<addr_t>(lo | (hi << 8));
+    m_reg.pc = JoinBytes(lo, hi);
   }
 
   void Sbc([[maybe_unused]] addr_t addr, [[maybe_unused]] byte_t data) { Adc(addr, ~data); }

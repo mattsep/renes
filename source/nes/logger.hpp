@@ -4,13 +4,14 @@
 #include <iostream>
 #include <mutex>
 
-#define LOG_LAZILY(expr)  [&]() -> decltype(auto) { return expr; }
-#define LOG_LEVEL(level)  ::nes::Log::SetLevel(::nes::LogLevel::level)
-#define LOG_TRACE(expr)   ::nes::Log::Trace(LOG_LAZILY(expr))
-#define LOG_DEBUG(expr)   ::nes::Log::Debug(LOG_LAZILY(expr))
-#define LOG_INFO(expr)    ::nes::Log::Info(LOG_LAZILY(expr))
-#define LOG_WARNING(expr) ::nes::Log::Warning(LOG_LAZILY(expr))
-#define LOG_ERROR(expr)   ::nes::Log::Error(LOG_LAZILY(expr))
+#define LOG_LAZILY(expr) [&]() -> decltype(auto) { return expr; }
+#define LOG_FILE(file)   ::nes::Log::SetFile(file)
+#define LOG_LEVEL(level) ::nes::Log::SetLevel(::nes::LogLevel::level)
+#define LOG_TRACE(expr)  ::nes::Log::Trace(LOG_LAZILY(expr))
+#define LOG_DEBUG(expr)  ::nes::Log::Debug(LOG_LAZILY(expr))
+#define LOG_INFO(expr)   ::nes::Log::Info(LOG_LAZILY(expr))
+#define LOG_WARN(expr)   ::nes::Log::Warn(LOG_LAZILY(expr))
+#define LOG_ERROR(expr)  ::nes::Log::Error(LOG_LAZILY(expr))
 
 namespace nes {
 

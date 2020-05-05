@@ -87,6 +87,7 @@ struct OpInfo {
   byte_t cycles;
   bool slow_on_page_cross;
   char const* name;
+  addr_t address = 0;
 };
 
 // clang-format off

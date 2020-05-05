@@ -9,7 +9,10 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/renes",
-            "args": [],
+            "args": [
+                "--log-level", "debug",
+                "--log-file", "stdout",
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

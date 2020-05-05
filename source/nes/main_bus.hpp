@@ -27,7 +27,7 @@ public:
     } else if (addr < 0x4020) {
       // TODO: Access APU and Joystick registers
     } else {
-      // TODO: return m_cartridge->Read(addr);
+      return m_cartridge->CpuRead(addr);
     }
 
     return 0;
@@ -35,14 +35,14 @@ public:
 
   void Write(addr_t addr, byte_t value) {
     if (addr < 0x2000) {
-      addr %= 0x0800;
+      addr &= 0x07FF;
       m_ram[addr] = value;
     } else if (addr < 0x4000) {
       WriteToPpuRegister(addr, value);
     } else if (addr < 0x4020) {
       // TODO: Access APU and Joystick registers
     } else {
-      // TODO: m_cartridge->Write(addr, value);
+      m_cartridge->CpuWrite(addr, value);
     }
   }
 
@@ -69,14 +69,14 @@ private:
   void WriteToPpuRegister(addr_t addr, byte_t value) {
     addr = 0x2000 + (addr % 8);
     switch (addr) {
-    case locations::ppu_ctrl: m_ppu->m_reg.control = value;
-    case locations::ppu_mask: m_ppu->m_reg.mask = value;
-    case locations::ppu_status: m_ppu->m_reg.status = value;
-    case locations::oam_addr: m_ppu->m_reg.oam_address = value;
-    case locations::oam_data: m_ppu->m_reg.oam_data = value;
-    case locations::ppu_scroll: m_ppu->m_reg.scroll = value;
-    case locations::ppu_addr: m_ppu->m_reg.address = value;
-    case locations::ppu_data: m_ppu->m_reg.data = value;
+    case locations::ppu_ctrl: m_ppu->m_reg.control = value; break;
+    case locations::ppu_mask: m_ppu->m_reg.mask = value; break;
+    case locations::ppu_status: m_ppu->m_reg.status = value; break;
+    case locations::oam_addr: m_ppu->m_reg.oam_address = value; break;
+    case locations::oam_data: m_ppu->m_reg.oam_data = value; break;
+    case locations::ppu_scroll: m_ppu->m_reg.scroll = value; break;
+    case locations::ppu_addr: m_ppu->m_reg.address = value; break;
+    case locations::ppu_data: m_ppu->m_reg.data = value; break;
     default: throw std::runtime_error("The impossible has happened");
     }
   }
