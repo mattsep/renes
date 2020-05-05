@@ -32,17 +32,14 @@ public:
     m_reg.pc = locations::reset_vector;
 
     m_opinfo = optable[0];  // BRK instruction
+    m_op = &Cpu::Brk;
     m_cycles = m_opinfo.cycles;
   }
 
   void Step() {
     // TODO: Handle interrupts
     switch (m_cycles) {
-    case 2: PrepareInstruction(); break;
-    case 1:
-      (this->*m_op)(m_addr, m_data);
-      ;
-      break;
+    case 1: Execute(); break;
     case 0: Decode(); break;
     }
 
@@ -66,7 +63,7 @@ public:
     case OpMode::Absolute: assembly += Hexify(addr); break;
     case OpMode::AbsoluteX: assembly += Hexify(addr) + ",X"; break;
     case OpMode::AbsoluteY: assembly += Hexify(addr) + ",Y"; break;
-    case OpMode::Immediate: assembly += '#' + Hexify(addr); break;
+    case OpMode::Immediate: assembly += '#' + Hexify(lo); break;
     case OpMode::Implied: assembly += "(imp)"; break;
     case OpMode::Indirect: assembly += '(' + Hexify(lo) + ')'; break;
     case OpMode::IndirectX: assembly += '(' + Hexify(lo) + ",X)"; break;
@@ -91,6 +88,7 @@ private:
   addr_t m_addr = 0;
   byte_t m_data = 0;
   byte_t m_cycles = 0;
+  bool m_executed = false;
 
   // --------------------------------------------
   // Basic read/write operations
@@ -99,10 +97,17 @@ private:
   void Decode() {
     m_opinfo = optable[Fetch()];
     m_opinfo.address = m_reg.pc - 1;
-
     m_cycles = m_opinfo.cycles;
+    m_executed = false;
+
+    PrepareInstruction();
 
     LOG_TRACE("[CPU] Instruction: " + GetOpAssembly());
+  }
+
+  void Execute() {
+    if (!m_executed) { (this->*m_op)(m_addr, m_data); }
+    m_executed = true;
   }
 
   auto Read(addr_t addr) -> byte_t { return m_bus->Read(addr); }

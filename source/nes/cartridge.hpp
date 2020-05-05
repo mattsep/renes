@@ -39,9 +39,7 @@ public:
     TvSystem tv_system = TvSystem::Unknown;
   };
 
-  auto Valid() -> bool {
-    return (!!m_mapper) && m_mapper->Valid();
-  }
+  auto Valid() -> bool { return (!!m_mapper) && m_mapper->Valid(); }
 
   auto Load(string const& file) -> bool {
     m_mapper.reset();
@@ -168,7 +166,7 @@ private:
     }
 
     std::vector<byte_t> buffer;
-    
+
     auto beg = contents.begin() + (0x200 * has_trainer + 0x10);
     auto end = beg + prg_rom_size;
     std::copy(beg, end, std::back_inserter(buffer));

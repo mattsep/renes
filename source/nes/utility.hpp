@@ -7,13 +7,8 @@
 
 namespace nes {
 
-inline auto operator"" _u8(unsigned long long int n) -> byte_t {
-  return static_cast<byte_t>(n);
-}
-
-inline auto operator"" _u16(unsigned long long int n) -> addr_t {
-  return static_cast<addr_t>(n);
-}
+inline auto operator"" _u8(unsigned long long int n) -> byte_t { return static_cast<byte_t>(n); }
+inline auto operator"" _u16(unsigned long long int n) -> addr_t { return static_cast<addr_t>(n); }
 
 template <class Int, class = std::enable_if_t<std::is_unsigned_v<Int>>>
 auto Hexify(Int n) -> string {
