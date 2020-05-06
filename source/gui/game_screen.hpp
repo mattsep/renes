@@ -6,11 +6,14 @@
 namespace gui {
 
 class GameScreen : public wxPanel {
-  wxDECLARE_EVENT_TABLE();
+  // wxDECLARE_EVENT_TABLE();
 
 public:
   GameScreen(wxFrame* parent) : wxPanel{parent, wxID_ANY, wxDefaultPosition, {256, 240}} {
     SetMinSize({256, 240});
+    Bind(wxEVT_PAINT, &GameScreen::OnPaint, this);
+    Bind(wxEVT_ERASE_BACKGROUND, &GameScreen::OnEraseBackground, this);
+    Bind(wxEVT_IDLE, &GameScreen::OnIdle, this);
   }
     
 
@@ -25,21 +28,22 @@ public:
   }
 
   void OnEraseBackground(wxEraseEvent&) {}
-  void OnIdle([[maybe_unused]] wxIdleEvent& event) {
+  void OnIdle(wxIdleEvent& event) {
     Refresh(false);
     wxMilliSleep(16);
+    event.RequestMore();
   }
 
 private:
   unsigned char* m_pixel_buffer;
 };
 
-// clang-format off
-wxBEGIN_EVENT_TABLE(GameScreen, wxPanel)
-  EVT_PAINT(GameScreen::OnPaint)
-  EVT_ERASE_BACKGROUND(GameScreen::OnEraseBackground)
-  EVT_IDLE(GameScreen::OnIdle)
-wxEND_EVENT_TABLE()
+// // clang-format off
+// wxBEGIN_EVENT_TABLE(GameScreen, wxPanel)
+//   EVT_PAINT(GameScreen::OnPaint)
+//   EVT_ERASE_BACKGROUND(GameScreen::OnEraseBackground)
+//   EVT_IDLE(GameScreen::OnIdle)
+// wxEND_EVENT_TABLE()
 // clang-format on
 
 }  // namespace gui

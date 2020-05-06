@@ -52,6 +52,7 @@ public:
 
   void Pause() { m_paused = true; }
   void Unpause() { m_paused = !m_cartridge.Valid(); }
+  void TogglePause() { m_paused ? Unpause() : Pause(); }
   void PowerOff() { m_running = false; }
   void Reset() {
     Pause();

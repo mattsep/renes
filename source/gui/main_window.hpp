@@ -8,6 +8,8 @@
 namespace gui {
 
 class MainWindow : public wxFrame {
+  wxDECLARE_EVENT_TABLE();
+
 public:
   MainWindow(nes::Console* console) : wxFrame{nullptr, wxID_ANY, "ReNES Emulator"} {
     m_console = console;
@@ -39,12 +41,12 @@ public:
   }
 
 private:
-  wxMenuBar* m_menu_bar;
-  wxMenu* m_file_menu;
-  wxMenu* m_tools_menu;
-  // wxListBox* m_list_box;
-  GameScreen* m_game_screen;
-  nes::Console* m_console;
+  wxMenuBar* m_menu_bar = nullptr;
+  wxMenu* m_file_menu = nullptr;
+  wxMenu* m_tools_menu = nullptr;
+  GameScreen* m_game_screen = nullptr;
+  nes::Console* m_console = nullptr;
+  wxListBox* m_register_box = nullptr;
 
   void MakeFileMenu() {
     m_file_menu = new wxMenu();
@@ -96,10 +98,55 @@ private:
   }
 
   void OnToolsViewCpuRegisters([[maybe_unused]] wxCommandEvent& event) {
-    
+    if (m_register_box == nullptr) {
+      m_register_box = new wxListBox{this, wxID_ANY, wxDefaultPosition, m_game_screen->GetSize()};
+      GetSizer()->Add(m_register_box, wxSizerFlags().Border(wxALL, 4));
+      GetSizer()->Fit(this);
+      Layout();
+
+      auto& reg = m_console->GetCpu().GetRegisters();
+      m_register_box->Append("Program Counter: " + nes::Hexify(reg.pc));
+      m_register_box->Append("Accumulator: " + nes::Hexify(reg.a));
+      m_register_box->Append("X Index: " + nes::Hexify(reg.x));
+      m_register_box->Append("Y Index: " + nes::Hexify(reg.y));
+      m_register_box->Append("Stack Pointer: " + nes::Hexify(reg.s));
+      m_register_box->Append("CPU Status: " + nes::Hexify(reg.p));
+    }
   }
   
   void OnToolsViewCpuInstructions([[maybe_unused]] wxCommandEvent& event) {}
+
+  void OnIdle([[maybe_unused]] wxIdleEvent& event) {
+    LOG_DEBUG("[GUI] Updating register view!");
+    if (m_register_box) {
+      auto& reg = m_console->GetCpu().GetRegisters();
+      m_register_box->SetString(0, "Program Counter: " + nes::Hexify(reg.pc));
+      m_register_box->SetString(1, "Accumulator: " + nes::Hexify(reg.a));
+      m_register_box->SetString(2, "X Index: " + nes::Hexify(reg.x));
+      m_register_box->SetString(3, "Y Index: " + nes::Hexify(reg.y));
+      m_register_box->SetString(4, "Stack Pointer: " + nes::Hexify(reg.s));
+      m_register_box->SetString(5, "CPU Status: " + nes::Hexify(reg.p));
+    }
+    // event.RequestMore();
+  }
+
+  void OnKeyReleased(wxKeyEvent& event) {
+    LOG_INFO("In an event!");
+    auto uc = event.GetUnicodeKey();
+    if (uc != WXK_NONE) {
+      LOG_INFO("[GUI] Pausing console");
+      if (uc == 'P') m_console->TogglePause();
+    } else {
+      LOG_INFO(uc);
+    }
+  }
 };
+
+// clang-format off
+wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
+  // EVT_IDLE(MainWindow::OnIdle)
+  EVT_KEY_UP(MainWindow::OnKeyReleased)
+wxEND_EVENT_TABLE()
+// clang-format on
 
 }  // namespace gui
