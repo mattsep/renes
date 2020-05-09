@@ -91,7 +91,7 @@ struct OpInfo {
 };
 
 // clang-format off
-static constexpr std::array optable = {
+inline constexpr std::array optable = {
   OpInfo{OpType::Brk, OpMode::Implied  , 7, false, "brk"},
   OpInfo{OpType::Ora, OpMode::IndirectX, 6, false, "ora"},
   OpInfo{OpType::Ill, OpMode::Implied  , 0, false, "ill"},

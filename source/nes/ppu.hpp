@@ -4,13 +4,13 @@
 
 #include "nes/common.hpp"
 #include "nes/display.hpp"
-#include "nes/ppu_bus.hpp"
+#include "nes/pallete.hpp"
 #include "nes/utility.hpp"
 
 namespace nes {
 
 class Ppu {
-  friend class MainBus;
+  friend class Bus;
 
   struct Row {
     static constexpr uint screen_height = Display::Height();
@@ -31,104 +31,60 @@ class Ppu {
   };
 
 public:
+  using PatternTable = std::array<byte_t, 0x1000>;
+  using NameTable = std::array<byte_t, 0x03C0>;
+  using AttributeTable = std::array<byte_t, 0x0040>;
+
   struct Registers {
     byte_t control;
     byte_t mask;
     byte_t status;
-    byte_t scroll;
-    byte_t address;
+    byte_t scroll_x;
+    byte_t scroll_y;
+    addr_t address;
     byte_t data;
     byte_t oam_address;
     byte_t oam_data;
     byte_t oam_dma;
   };
 
-  Ppu() = default;
+  struct Sprite {
+    byte_t x;
+    byte_t y;
+    byte_t tile;
+    byte_t attr;
+  };
 
-  void AttachBus(PpuBus* ppu_bus) { m_bus = AssumeNotNull(ppu_bus); }
-  void AttachDisplay(Display* display) { m_display = AssumeNotNull(display); }
-
-  void Step() {
-    LOG_TRACE("[PPU] current pixel: " + std::to_string(m_col) + ", " + std::to_string(m_row));
-
-    // TODO: this is just a placeholder draw statement
-    if (m_row < Row::max / 2) {
-      auto purple = Pixel{0xFF'00'FF};
-      m_display->DrawPixel(m_col, m_row, purple);
-    } else {
-      auto teal = Pixel{0x00'FF'FF};
-      m_display->DrawPixel(m_col, m_row, teal);
-    }
-
-    // The PPU skips the point (340, 261) on odd frames. This is equivalent to skipping the idle
-    // step at (0, 0), and letting scanline 261 be a full render line.
-    if (m_row == 0 && m_col == 0) { m_col = m_frame_odd ? 1 : 0; }
-
-    if (m_row < Row::screen_height || m_row == Row::pre_render) { RenderCycle(); }
-
-    if ((m_row == Row::vblank_set) && (m_col == Col::vblank_set)) {
-      // TODO: set v-blank flag
-      VBlank(true);
-    }
-
-    if (m_row == Row::vblank_clear && m_col == Col::vblank_clear) {
-      // TODO: clear status flags
-      VBlank(false);
-    }
-
-    MoveDot();
-  }
+  void AttachDisplay(Display* display);
+  void Step();
 
 private:
-  Registers m_reg = {};
-  PpuBus* m_bus = nullptr;
   Display* m_display = nullptr;
   uint m_row = 261;
   uint m_col = 0;
   bool m_frame_odd = false;
-  [[maybe_unused]] std::array<byte_t, 256> m_oam;
+  Registers m_reg = {};
+  std::array<PatternTable, 2> m_pattern_tables;
+  std::array<NameTable, 4> m_name_tables;
+  std::array<AttributeTable, 4> m_attribute_tables;  // technically part of the name tables
+  std::array<Sprite, 64> m_sprites;                  // also called OAM - Object Attribute Memory
 
-  void MoveDot() {
-    if (++m_col > Col::max) {
-      m_col = 0;
-      if (++m_row > Row::max) {
-        m_row = 0;
-        m_frame_odd = !m_frame_odd;
-      }
-    }
-  }
+  void MoveDot();
 
-  auto VBlank() const -> bool { return TestBit(m_reg.status, 7); }
-  void VBlank(bool set) { set ? SetBit(m_reg.status, 7) : ClearBit(m_reg.status, 7); }
+  auto Read(addr_t addr) -> byte_t;
+  void Write(addr_t addr, byte_t value);
 
-  void RenderCycle() {
-    if (m_col == 0) return;  // idle cycle
+  auto VBlank() const -> bool;
+  auto SpiteZeroHit() const -> bool;
+  auto SpriteOverflow() const -> bool;
 
-    if (m_col <= 256) {
-      switch ((m_col - 1) & 0x07) {
-      case 1:
-        // TODO: load name table byte
-        break;
-      case 3:
-        // TODO: load attribute table byte
-        break;
-      case 5:
-        // TODO: load pattern table low tile
-        break;
-      case 7:
-        // TODO: load pattern table high tile & increment horizontal part of v register
-        break;
-      default:
-        // each of the above loads takes 2 cycles - we mimic this by skipping loads on even cycles
-        break;
-      }
-    } else if (m_col <= 320) {
-    }
-  }
+  void VBlank(bool set);
+  void SpriteZeroHit(bool set);
+  void SpriteOverflow(bool set);
 
-  void PostRenderCycle() {}
-
-  void PreRenderCycle() {}
+  void RenderCycle();
+  void PostRenderCycle();
+  void PreRenderCycle();
 };
 
 }  // namespace nes

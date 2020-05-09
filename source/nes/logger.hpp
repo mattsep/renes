@@ -19,11 +19,8 @@ enum class LogLevel : int { None = 0, Error, Warn, Info, Debug, Trace, All, Defa
 
 #if !defined(RENES_ENABLE_LOGGING)
 
-template <class Stream>
 class Log {
 public:
-  Log(Stream &&) Log(Stream &&, LogLevel) {}
-
   static void SetFile(std::string const &) {}
 
   static void SetLevel(LogLevel) {}

@@ -3,19 +3,23 @@
 #include <wx/dcbuffer.h>
 #include <wx/wx.h>
 
+#include "nes/nes.hpp"
+
 namespace gui {
 
 class GameScreen : public wxPanel {
-  // wxDECLARE_EVENT_TABLE();
-
 public:
-  GameScreen(wxFrame* parent) : wxPanel{parent, wxID_ANY, wxDefaultPosition, {256, 240}} {
+  GameScreen(wxFrame* parent, nes::Console* console)
+    : wxPanel{parent, wxID_ANY, wxDefaultPosition, {256, 240}} {
     SetMinSize({256, 240});
+
     Bind(wxEVT_PAINT, &GameScreen::OnPaint, this);
     Bind(wxEVT_ERASE_BACKGROUND, &GameScreen::OnEraseBackground, this);
     Bind(wxEVT_IDLE, &GameScreen::OnIdle, this);
+    Bind(wxEVT_KEY_UP, &GameScreen::OnKeyReleased, this);
+
+    m_console = console;
   }
-    
 
   void SetPixelBuffer(unsigned char* pixel_buffer) { m_pixel_buffer = pixel_buffer; }
 
@@ -35,15 +39,14 @@ public:
   }
 
 private:
-  unsigned char* m_pixel_buffer;
-};
+  nes::Console* m_console = nullptr;
+  unsigned char* m_pixel_buffer = nullptr;
 
-// // clang-format off
-// wxBEGIN_EVENT_TABLE(GameScreen, wxPanel)
-//   EVT_PAINT(GameScreen::OnPaint)
-//   EVT_ERASE_BACKGROUND(GameScreen::OnEraseBackground)
-//   EVT_IDLE(GameScreen::OnIdle)
-// wxEND_EVENT_TABLE()
-// clang-format on
+  void OnKeyReleased(wxKeyEvent& event) {
+    event.Skip();
+    auto uc = event.GetUnicodeKey();
+    if (uc == 'p') m_console->Pause();
+  }
+};
 
 }  // namespace gui

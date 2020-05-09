@@ -1,10 +1,10 @@
 #pragma once
 
-#include "nes/main_bus.hpp"
+#include "nes/bus.hpp"
 #include "nes/common.hpp"
 #include "nes/console.hpp"
 #include "nes/cpu.hpp"
 #include "nes/display.hpp"
 #include "nes/locations.hpp"
-#include "nes/utility.hpp"
 #include "nes/logger.hpp"
+#include "nes/utility.hpp"

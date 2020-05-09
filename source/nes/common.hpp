@@ -15,13 +15,11 @@ using std::size_t;
 using std::string;
 
 // forward declarations
-class Nes;
+class Bus;
+class Cartridge;
 class Cpu;
 class Ppu;
-class MainBus;
-class Mapper;
-class PpuBus;
-class Cartridge;
+class Nes;
 class Mapper;
 
 }  // namespace nes
