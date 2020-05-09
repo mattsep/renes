@@ -1,5 +1,5 @@
-#include <future>
 #include <iostream>
+#include <optional>
 #include <string_view>
 #include <thread>
 #include <vector>
@@ -14,6 +14,7 @@ struct Options {
   nes::LogLevel log_level = nes::LogLevel::Info;
   std::string log_file = "";
   std::string rom_file = "";
+  std::optional<nes::addr_t> cpu_init_address = std::nullopt;
 };
 
 void PrintHelp();
@@ -56,9 +57,11 @@ void RunNes(Options const& options, nes::Console* console) {
   LOG_INFO("Starting ReNES");
 
   console->Reset();
-  if (!options.rom_file.empty()) {
-    console->Load(options.rom_file);
-  }  
+  if (!options.rom_file.empty()) { console->Load(options.rom_file); }
+
+  if (options.cpu_init_address.has_value()) {
+    console->ForceCpuInitPc(*options.cpu_init_address);
+  }
   
   console->Run();
 }
@@ -119,6 +122,9 @@ Options ParseArgs(int argc, char* argv[]) {
         // clang-format on
       } else if (flag == "--log-file") {
         options.log_file = arg;
+      } else if (flag == "--force-cpu-init-pc") {
+        auto pc = std::stoul(std::string{arg}, nullptr, 0);
+        options.cpu_init_address = static_cast<nes::addr_t>(pc);
       } else {
         UnknownFlag(flag);
         return options;

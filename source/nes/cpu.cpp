@@ -11,16 +11,9 @@ Cpu::Cpu() { Reset(); }
 void Cpu::AttachBus(Bus* bus) { m_bus = AssumeNotNull(bus); }
 
 void Cpu::Reset() {
-  m_reg.a = 0;
-  m_reg.x = 0;
-  m_reg.y = 0;
-  m_reg.s = 0xFF;
-  m_reg.p = 0x20;
-  m_reg.pc = locations::reset_vector;
-
   m_opinfo = optable[0];  // BRK instruction
-  m_op = &Cpu::Brk;
   m_cycles = m_opinfo.cycles;
+  m_op = &Cpu::HandleReset;
 }
 
 void Cpu::Step() {
@@ -33,17 +26,21 @@ void Cpu::Step() {
   --m_cycles;
 }
 
+void Cpu::SetProgramCounter(addr_t pc) {
+  HandleReset();
+  m_reg.pc = pc;
+  m_cycles = 0;
+}
+
 auto Cpu::GetRegisters() const -> Registers const& { return m_reg; }
-
 auto Cpu::GetOpInfo() -> OpInfo { return m_opinfo; }
-
 auto Cpu::GetOpAssembly() -> string {
   auto assembly = string{};
   assembly.reserve(16);
   assembly += Hexify(m_opinfo.address) + ' ' + m_opinfo.name + ' ';
 
-  auto lo = Read(m_opinfo.address + 1);
-  auto hi = Read(m_opinfo.address + 2);
+  auto lo = Read(static_cast<addr_t>(m_opinfo.address + 1));
+  auto hi = Read(static_cast<addr_t>(m_opinfo.address + 2));
   auto addr = JoinBytes(lo, hi);
 
   switch (m_opinfo.mode) {
@@ -52,7 +49,7 @@ auto Cpu::GetOpAssembly() -> string {
   case OpMode::AbsoluteY: assembly += Hexify(addr) + ",Y"; break;
   case OpMode::Immediate: assembly += '#' + Hexify(lo); break;
   case OpMode::Implied: assembly += "(imp)"; break;
-  case OpMode::Indirect: assembly += '(' + Hexify(lo) + ')'; break;
+  case OpMode::Indirect: assembly += '(' + Hexify(addr) + ')'; break;
   case OpMode::IndirectX: assembly += '(' + Hexify(lo) + ",X)"; break;
   case OpMode::IndirectY: assembly += '(' + Hexify(lo) + "),Y"; break;
   case OpMode::Relative: [[fallthrough]];
@@ -69,24 +66,37 @@ auto Cpu::GetOpAssembly() -> string {
 // Private member function definitions
 // ----------------------------------------------
 
+auto Cpu::PrintStatus() -> string {
+  auto status = string{"[CPU] ... "};
+  status += GetOpAssembly();
+  if (status.length() <= 26) {
+    status += string(26 - status.length(), ' ');
+  }
+  status += " | A: " + Hexify(m_reg.a);
+  status += " | X: " + Hexify(m_reg.x);
+  status += " | Y: " + Hexify(m_reg.y);
+  status += " | P: " + Hexify(m_reg.p);
+  status += " | S: " + Hexify(m_reg.s);
+  return status;
+}
+
 void Cpu::Decode() {
   if (m_nmi) {
     m_opinfo = optable[0];  // BRK
     m_op = &Cpu::HandleNmi;
-    LOG_TRACE("[CPU] Handling NMI");
   } else if (m_irq && !IrqDisabled()) {
     m_opinfo = optable[0];  // BRK
     m_op = &Cpu::HandleIrq;
-    LOG_TRACE("[CPU] Handling IRQ");
   } else {
     m_opinfo = optable[Fetch()];
+    m_opinfo.address = m_reg.pc - 1;
     PrepareInstruction();
-    LOG_TRACE("[CPU] Instruction: " + GetOpAssembly());
   }
 
-  m_opinfo.address = m_reg.pc - 1;
   m_cycles = m_opinfo.cycles;
   m_executed = false;
+
+  LOG_TRACE(PrintStatus());
 }
 
 void Cpu::Execute() {
@@ -95,13 +105,26 @@ void Cpu::Execute() {
 }
 
 void Cpu::HandleIrq() {
+  LOG_TRACE("[CPU] ... Handling IRQ");
   IrqDisabled(true);
   Interrupt(locations::irq_vector);
+  m_irq = false;
 }
 
 void Cpu::HandleNmi() {
+  LOG_TRACE("[CPU] ... Handling NMI");
   IrqDisabled(true);
   Interrupt(locations::nmi_vector);
+  m_nmi = false;
+}
+
+void Cpu::HandleReset() {
+  m_reg.a = 0;
+  m_reg.x = 0;
+  m_reg.y = 0;
+  m_reg.s = 0xFD;
+  m_reg.p = 0x24;
+  m_reg.pc = ReadAddress(locations::reset_vector);
 }
 
 auto Cpu::Read(addr_t addr) -> byte_t { return m_bus->Read(addr); }
@@ -155,6 +178,7 @@ void Cpu::Interrupt(addr_t addr) {
   Push(lo);
   Push(m_reg.p);
   m_reg.pc = ReadAddress(addr);
+  LOG_TRACE("[CPU] ... Program counter set to " + Hexify(m_reg.pc));
 }
 
 void Cpu::Absolute(addr_t offset = 0) {
@@ -169,7 +193,20 @@ void Cpu::Immediate() { m_addr = m_reg.pc++; }
 
 void Cpu::Implied() {}
 
-void Cpu::Indirect(addr_t x = 0, addr_t y = 0) {
+void Cpu::Indirect() {
+  auto lo = Fetch();
+  auto hi = Fetch();
+
+  // this is to handle a cpu bug where pages can't be crossed during indirect access
+  auto addr1 = JoinBytes(lo++, hi);
+  auto addr2 = JoinBytes(lo++, hi);
+
+  lo = Read(addr1);
+  hi = Read(addr2);
+  m_addr = JoinBytes(lo, hi);
+}
+
+void Cpu::IndirectIndexed(addr_t x = 0, addr_t y = 0) {
   auto arg = Fetch();
   auto a = JoinBytes(Read((arg + x) & 0xFF), Read((arg + x + 1) & 0xFF));
   auto b = static_cast<addr_t>(a + y);
@@ -192,8 +229,8 @@ void Cpu::PrepareInstruction() {
   case OpMode::Immediate: Immediate(); break;
   case OpMode::Implied: Implied(); break;
   case OpMode::Indirect: Indirect(); break;
-  case OpMode::IndirectX: Indirect(m_reg.x, 0); break;
-  case OpMode::IndirectY: Indirect(0, m_reg.y); break;
+  case OpMode::IndirectX: IndirectIndexed(m_reg.x, 0); break;
+  case OpMode::IndirectY: IndirectIndexed(0, m_reg.y); break;
   case OpMode::Relative: Relative(); break;
   case OpMode::ZeroPage: ZeroPage(); break;
   case OpMode::ZeroPageX: ZeroPage(m_reg.x); break;
@@ -356,7 +393,11 @@ void Cpu::Eor() {
   Negative(TestBit(m_reg.a, 7));
 }
 
-void Cpu::Ill() { throw std::runtime_error("Illegal CPU instruction"); }
+void Cpu::Ill() {
+  auto message = std::string{"Illegal CPU instruction: "} + Hexify(Read(m_opinfo.address)) + " [" +
+                 GetOpAssembly() + "]";
+  throw std::runtime_error(message);
+}
 
 void Cpu::Inc() {
   ++m_data;
@@ -379,12 +420,10 @@ void Cpu::Iny() {
 
 void Cpu::Jmp() { m_reg.pc = m_addr; }
 void Cpu::Jsr() {
-  auto [lo, hi] = SplitBytes(m_reg.pc);
+  auto [lo, hi] = SplitBytes(--m_reg.pc);
   Push(hi);
   Push(lo);
-  lo = Fetch();
-  hi = Fetch();
-  m_reg.pc = JoinBytes(lo, hi);
+  m_reg.pc = m_addr;
 }
 
 void Cpu::Lda() {
@@ -474,7 +513,7 @@ void Cpu::Rti() {
 void Cpu::Rts() {
   auto lo = Pull();
   auto hi = Pull();
-  m_reg.pc = JoinBytes(lo, hi);
+  m_reg.pc = JoinBytes(lo, hi) + 1;
 }
 
 void Cpu::Sbc() {

@@ -1,4 +1,6 @@
-build/*
+build/
+logs/
+roms/
 
 # VSCode files
 .vscode/*

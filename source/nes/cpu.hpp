@@ -25,6 +25,8 @@ public:
   void Reset();
   void Step();
 
+  void SetProgramCounter(addr_t pc);
+
   auto GetRegisters() const -> Registers const&;
   auto GetOpInfo() -> OpInfo;
   auto GetOpAssembly() -> string;
@@ -47,11 +49,15 @@ private:
   // Basic read/write operations
   // --------------------------------------------
 
+  auto PrintStatus() -> string;
+
   void Decode();
   void Execute();
 
+  void RequestNmi();
   void HandleIrq();
   void HandleNmi();
+  void HandleReset();
 
   auto Read(addr_t addr) -> byte_t;
   void Write(addr_t addr, byte_t value);
@@ -94,7 +100,8 @@ private:
   void Absolute(addr_t offset);
   void Immediate();
   void Implied();
-  void Indirect(addr_t x, addr_t y);
+  void Indirect();
+  void IndirectIndexed(addr_t x, addr_t y);
   void Relative();
   void ZeroPage(addr_t offset);
 

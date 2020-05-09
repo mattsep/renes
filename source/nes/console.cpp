@@ -46,6 +46,10 @@ void Console::Reset() {
   m_cpu.Reset();
 }
 
+void Console::ForceCpuInitPc(addr_t pc) {
+  m_cpu.SetProgramCounter(pc);
+}
+
 auto Console::GetCpu() const -> Cpu const& { return m_cpu; }
 auto Console::GetPpu() const -> Ppu const& { return m_ppu; }
 auto Console::GetCartridge() const -> Cartridge const& { return m_cartridge; }

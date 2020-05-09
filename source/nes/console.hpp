@@ -25,6 +25,8 @@ public:
   void PowerOff();
   void Reset();
 
+  void ForceCpuInitPc(addr_t pc);
+
   // read-only access to internal components
   auto GetCpu() const -> Cpu const&;
   auto GetPpu() const -> Ppu const&;
