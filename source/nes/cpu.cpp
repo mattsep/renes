@@ -67,11 +67,10 @@ auto Cpu::GetOpAssembly() -> string {
 // ----------------------------------------------
 
 auto Cpu::PrintStatus() -> string {
-  auto status = string{"[CPU] ... "};
-  status += GetOpAssembly();
-  if (status.length() <= 26) {
-    status += string(26 - status.length(), ' ');
-  }
+  auto status = string{};
+  status.reserve(70);
+  status += "[CPU] ... " + GetOpAssembly();
+  if (status.length() <= 27) { status += string(27 - status.length(), ' '); }
   status += " | A: " + Hexify(m_reg.a);
   status += " | X: " + Hexify(m_reg.x);
   status += " | Y: " + Hexify(m_reg.y);
@@ -107,14 +106,14 @@ void Cpu::Execute() {
 void Cpu::HandleIrq() {
   LOG_TRACE("[CPU] ... Handling IRQ");
   IrqDisabled(true);
-  Interrupt(locations::irq_vector);
+  Interrupt(locations::irq_vector, false);
   m_irq = false;
 }
 
 void Cpu::HandleNmi() {
   LOG_TRACE("[CPU] ... Handling NMI");
   IrqDisabled(true);
-  Interrupt(locations::nmi_vector);
+  Interrupt(locations::nmi_vector, false);
   m_nmi = false;
 }
 
@@ -140,6 +139,13 @@ void Cpu::Push(byte_t a) {
 auto Cpu::Pull() -> byte_t {
   ++m_reg.s;
   return Read(0x0100 + m_reg.s);
+}
+
+void Cpu::PullStatus() {
+  // pulling the status flag always sets the unused bit, and doesn't affect the break bit
+  auto b = BreakSet();
+  m_reg.p = Pull() | 0x20;
+  BreakSet(b);
 }
 
 auto Cpu::Carry() const -> bool { return m_reg.p & 0x01; }
@@ -172,11 +178,13 @@ void Cpu::Compare(byte_t a, byte_t b) {
   Negative(TestBit(static_cast<byte_t>(a - b), 7));
 }
 
-void Cpu::Interrupt(addr_t addr) {
+void Cpu::Interrupt(addr_t addr, bool break_flag) {
   auto [lo, hi] = SplitBytes(m_reg.pc);
+  BreakSet(break_flag);
   Push(hi);
   Push(lo);
   Push(m_reg.p);
+  BreakSet(true);
   m_reg.pc = ReadAddress(addr);
   LOG_TRACE("[CPU] ... Program counter set to " + Hexify(m_reg.pc));
 }
@@ -351,10 +359,7 @@ void Cpu::Bmi() { Branch(Negative()); }
 void Cpu::Bne() { Branch(!Zero()); }
 void Cpu::Bpl() { Branch(!Negative()); }
 
-void Cpu::Brk() {
-  BreakSet(true);
-  Interrupt(locations::irq_vector);
-}
+void Cpu::Brk() { Interrupt(locations::irq_vector, true); }
 
 void Cpu::Bvc() { Branch(!Overflow()); }
 void Cpu::Bvs() { Branch(Overflow()); }
@@ -467,9 +472,21 @@ void Cpu::Ora() {
 }
 
 void Cpu::Pha() { Push(m_reg.a); }
-void Cpu::Php() { Push(m_reg.p); }
-void Cpu::Pla() { m_reg.a = Pull(); }
-void Cpu::Plp() { m_reg.p = Pull(); }
+
+void Cpu::Php() {
+  auto b = BreakSet();
+  BreakSet(true);
+  Push(m_reg.p);
+  BreakSet(b);
+}
+
+void Cpu::Pla() {
+  m_reg.a = Pull();
+  Zero(m_reg.a == 0);
+  Negative(TestBit(m_reg.a, 7));
+}
+
+void Cpu::Plp() { PullStatus(); }
 
 void Cpu::Rol() {
   byte_t c = Carry();
@@ -478,11 +495,13 @@ void Cpu::Rol() {
     m_reg.a <<= 1;
     m_reg.a += c;
     Zero(m_reg.a == 0);
+    Negative(TestBit(m_reg.a, 7));
   } else {
     Carry(TestBit(m_data, 7));
     m_data <<= 1;
-    m_data += 0x80 * c;
+    m_data += c;
     Zero(m_data == 0);
+    Negative(TestBit(m_data, 7));
     Write(m_addr, m_data);
   }
 }
@@ -492,19 +511,22 @@ void Cpu::Ror() {
   if (m_opinfo.mode == OpMode::Implied) {
     Carry(TestBit(m_reg.a, 0));
     m_reg.a >>= 1;
-    m_reg.a += c;
+    m_reg.a += 0x80 * c;
     Zero(m_reg.a == 0);
+    Negative(TestBit(m_reg.a, 7));
   } else {
     Carry(TestBit(m_data, 0));
-    m_data <<= 1;
+    m_data >>= 1;
     m_data += 0x80 * c;
     Zero(m_data == 0);
+    Negative(TestBit(m_data, 7));
     Write(m_addr, m_data);
   }
 }
 
 void Cpu::Rti() {
-  m_reg.p = Pull();
+  // Break flag is unaffected by this instruction
+  PullStatus();
   auto lo = Pull();
   auto hi = Pull();
   m_reg.pc = JoinBytes(lo, hi);

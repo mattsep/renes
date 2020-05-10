@@ -65,6 +65,7 @@ private:
   auto ReadAddress(addr_t addr) -> addr_t;
   void Push(byte_t a);
   auto Pull() -> byte_t;
+  void PullStatus();
 
   // --------------------------------------------
   // Status flag operations
@@ -95,7 +96,7 @@ private:
   auto PageCrossed(addr_t a, addr_t b) -> bool;
   void Branch(bool cond);
   void Compare(byte_t a, byte_t b);
-  void Interrupt(addr_t addr);
+  void Interrupt(addr_t addr, bool break_flag);
 
   void Absolute(addr_t offset);
   void Immediate();
