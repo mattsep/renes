@@ -9,6 +9,21 @@ namespace nes {
 void Ppu::AttachDisplay(Display* display) { m_display = AssumeNotNull(display); }
 
 void Ppu::Step() {
+  // The PPU skips the point (340, 261) on odd frames. This is equivalent to skipping the idle
+  // step at (0, 0), and letting scanline 261 be a full render line.
+  if (m_row == 0 && m_col == 0) { m_col = m_frame_odd ? 1 : 0; }
+  if (m_row < Row::screen_height || m_row == Row::pre_render) { RenderCycle(); }
+  if ((m_row == Row::vblank_set) && (m_col == Col::vblank_set)) { VBlank(true); }
+  if (m_row == Row::vblank_clear && m_col == Col::vblank_clear) { VBlank(false); }
+
+  DrawPixel();
+}
+
+// ----------------------------------------------
+// Private member function definitions
+// ----------------------------------------------
+
+void Ppu::DrawPixel() {
   // TODO: this is just a placeholder draw statement
   auto color = Pixel{};
   if (m_row > Row::screen_height / 3 && m_row < 2 * Row::screen_height / 3 &&
@@ -19,21 +34,7 @@ void Ppu::Step() {
   }
   m_display->DrawPixel(m_col, m_row, color);
 
-  // The PPU skips the point (340, 261) on odd frames. This is equivalent to skipping the idle
-  // step at (0, 0), and letting scanline 261 be a full render line.
-  if (m_row == 0 && m_col == 0) { m_col = m_frame_odd ? 1 : 0; }
-  if (m_row < Row::screen_height || m_row == Row::pre_render) { RenderCycle(); }
-  if ((m_row == Row::vblank_set) && (m_col == Col::vblank_set)) { VBlank(true); }
-  if (m_row == Row::vblank_clear && m_col == Col::vblank_clear) { VBlank(false); }
-
-  MoveDot();
-}
-
-// ----------------------------------------------
-// Private member function definitions
-// ----------------------------------------------
-
-void Ppu::MoveDot() {
+  // move to next pixel
   if (++m_col > Col::max) {
     m_col = 0;
     if (++m_row > Row::max) {

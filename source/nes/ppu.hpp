@@ -69,7 +69,7 @@ private:
   std::array<AttributeTable, 4> m_attribute_tables;  // technically part of the name tables
   std::array<Sprite, 64> m_sprites;                  // also called OAM - Object Attribute Memory
 
-  void MoveDot();
+  void DrawPixel();
 
   auto Read(addr_t addr) -> byte_t;
   void Write(addr_t addr, byte_t value);

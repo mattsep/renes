@@ -8,7 +8,7 @@
 namespace nes {
 
 // default pallete colors found here: http://wiki.nesdev.com/w/index.php/PPU_palettes
-constexpr auto pallete = std::array{
+inline constexpr auto pallete = std::array{
     Pixel{0x54'54'54}, Pixel{0x00'1E'74}, Pixel{0x08'10'90}, Pixel{0x30'00'88},  // 0x00 - 0x03
     Pixel{0x44'00'64}, Pixel{0x5C'00'30}, Pixel{0x54'04'00}, Pixel{0x3C'18'00},  // 0x04 - 0x07
     Pixel{0x20'2A'00}, Pixel{0x08'3A'00}, Pixel{0x00'40'00}, Pixel{0x00'3C'00},  // 0x08 - 0x0B
