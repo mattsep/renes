@@ -63,7 +63,11 @@ void RunNes(Options const& options, nes::Console* console) {
     console->ForceCpuInitPc(*options.cpu_init_address);
   }
   
-  console->Run();
+  try {
+    console->Run();
+  } catch (std::exception& e) {
+    std::cerr << "ERROR: " << e.what() << "\n";
+  }
 }
 
 Options ParseArgs(int argc, char* argv[]) {
@@ -151,7 +155,10 @@ options:
       --log-file  FILE    Logs output to FILE instead of to the console.
       --log-level LEVEL   Sets the logging level to LEVEL. Can be one of:
                           'all', 'error', 'warn', 'info', 'debug', 'trace',
-                          or 'none'
+                          or 'none'.
+      --force-cpu-init-pc ADDRESS
+                          Forces the CPU to start execution at ADDRESS. You
+                          probably don't need to use this!
 
 )EOF";
 

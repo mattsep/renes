@@ -23,6 +23,8 @@ public:
   auto Read(addr_t addr) -> byte_t;
   void Write(addr_t addr, byte_t value);
 
+  void RequestNmi() const;
+
 private:
   Cpu* m_cpu = nullptr;
   Ppu* m_ppu = nullptr;

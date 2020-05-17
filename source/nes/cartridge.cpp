@@ -6,12 +6,6 @@ namespace nes {
 // Public member function definitions
 // ----------------------------------------------
 
-auto Cartridge::Valid() -> bool { return (!!m_mapper) && (m_mapper->Valid()); }
-auto Cartridge::CpuRead(addr_t addr) -> byte_t { return m_mapper->CpuRead(addr); }
-void Cartridge::CpuWrite(addr_t addr, byte_t value) { m_mapper->CpuWrite(addr, value); }
-auto Cartridge::PpuRead(addr_t addr) -> byte_t { return m_mapper->PpuRead(addr); }
-void Cartridge::PpuWrite(addr_t addr, byte_t value) { m_mapper->PpuWrite(addr, value); }
-
 auto Cartridge::Load(string const& file) -> bool {
   m_mapper.reset();
 
@@ -38,12 +32,35 @@ auto Cartridge::Load(string const& file) -> bool {
   return ParseContents(contents) && Valid();
 }
 
+auto Cartridge::Valid() -> bool { return (!!m_mapper) && (m_mapper->Valid()); }
+
+auto Cartridge::GetInfo() -> Info const& { return m_info; }
+
+auto Cartridge::CpuRead(addr_t addr) -> byte_t { return m_mapper->CpuRead(addr); }
+void Cartridge::CpuWrite(addr_t addr, byte_t value) { m_mapper->CpuWrite(addr, value); }
+
+auto Cartridge::PpuRead(addr_t addr) -> byte_t { return m_mapper->PpuRead(addr); }
+void Cartridge::PpuWrite(addr_t addr, byte_t value) { m_mapper->PpuWrite(addr, value); }
+
 // ----------------------------------------------
 // Private member function definitions
 // ----------------------------------------------
 
 auto Cartridge::Validate(std::vector<byte_t> const& contents) -> bool {
   return (contents[0] == 'N' && contents[1] == 'E' && contents[2] == 'S' && contents[3] == '\x1A');
+}
+
+auto Cartridge::ParseContents(std::vector<byte_t> const& contents) -> bool {
+  auto format = GetFileFormat(contents);
+  if (format == Format::Unknown) return false;
+
+  GetMapper(contents, format);
+  m_info.mirror_mode = GetMirroringMode(contents);
+  if (m_mapper) {
+    return FillRom(contents, format);
+  } else {
+    return false;
+  }
 }
 
 auto Cartridge::GetFileFormat(std::vector<byte_t> const& contents) -> Format {
@@ -61,25 +78,17 @@ auto Cartridge::GetFileFormat(std::vector<byte_t> const& contents) -> Format {
   return Format::Unknown;
 }
 
-auto Cartridge::ParseContents(std::vector<byte_t> const& contents) -> bool {
-  auto format = GetFileFormat(contents);
-  if (format == Format::Unknown) return false;
-
-  GetMapper(contents, format);
-  if (m_mapper) {
-    return FillRom(contents, format);
-  } else {
-    return false;
-  }
+auto Cartridge::GetMirroringMode(std::vector<byte_t> const& contents) -> MirrorMode {
+  auto mode = (contents[6] & 1) ? MirrorMode::Vertical : MirrorMode::Horizontal;
+  if (contents[6] & 0b1000) mode = MirrorMode::FourScreen;
+  return mode;
 }
 
 void Cartridge::GetMapper(std::vector<byte_t> const& contents, Format format) {
   m_info.mapper_id = contents[6] >> 4;
-  
-  if (format == Format::Nes_v1) {
-    m_info.mapper_id |= contents[7] & 0xF0;
-  } 
-  
+
+  if (format == Format::Nes_v1) { m_info.mapper_id |= contents[7] & 0xF0; }
+
   if (format == Format::Nes_v2) {
     m_info.mapper_id |= (contents[8] & 0x0F) << 8;
     m_info.submapper_id = contents[8] >> 4;
@@ -124,18 +133,18 @@ auto Cartridge::FillRom(std::vector<byte_t> const& contents, Format format) -> b
     return false;
   }
 
-  std::vector<byte_t> buffer;
+  std::vector<byte_t> buffer(prg_rom_size);
 
   auto beg = contents.begin() + (0x200 * has_trainer + 0x10);
   auto end = beg + prg_rom_size;
-  std::copy(beg, end, std::back_inserter(buffer));
+  std::copy(beg, end, buffer.begin());
   m_mapper->SetProgramRom(std::move(buffer));
 
-  buffer.clear();
+  buffer.resize(chr_rom_size);
 
   beg = end;
   end = beg + chr_rom_size;
-  std::copy(beg, end, std::back_inserter(buffer));
+  std::copy(beg, end, buffer.begin());
   m_mapper->SetCharacterRom(std::move(buffer));
 
   return true;

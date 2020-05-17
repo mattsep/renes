@@ -4,6 +4,10 @@
 
 namespace nes::locations {
 
+// ----------------------------------------------
+// CPU address locations
+// ----------------------------------------------
+
 constexpr addr_t ppu_ctrl = 0x2000;
 constexpr addr_t ppu_mask = 0x2001;
 constexpr addr_t ppu_status = 0x2002;
@@ -46,5 +50,19 @@ constexpr addr_t joystick2 = 0x4017;
 constexpr addr_t nmi_vector = 0xFFFA;
 constexpr addr_t reset_vector = 0xFFFC;
 constexpr addr_t irq_vector = 0xFFFE;
+
+// ----------------------------------------------
+// PPU address locations
+// ----------------------------------------------
+
+constexpr addr_t pattern_table_0 = 0x0000;
+constexpr addr_t pattern_table_1 = 0x1000;
+
+constexpr addr_t name_table_0 = 0x2000;
+constexpr addr_t name_table_1 = 0x2400;
+constexpr addr_t name_table_2 = 0x2800;
+constexpr addr_t name_table_3 = 0x2C00;
+
+constexpr addr_t palettes = 0x3F00;
 
 }  // namespace nes::locations

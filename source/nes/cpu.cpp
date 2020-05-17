@@ -103,6 +103,9 @@ void Cpu::Execute() {
   m_executed = true;
 }
 
+void Cpu::RequestIrq() { m_irq = true; }
+void Cpu::RequestNmi() { m_nmi = true; }
+
 void Cpu::HandleIrq() {
   LOG_TRACE("[CPU] ... Handling IRQ");
   IrqDisabled(true);
@@ -190,8 +193,9 @@ void Cpu::Interrupt(addr_t addr, bool break_flag) {
 }
 
 void Cpu::Absolute(addr_t offset = 0) {
-  addr_t a = Fetch();
-  a += 0x0100 * Fetch();
+  auto lo = Fetch();
+  auto hi = Fetch();
+  addr_t a = JoinBytes(lo, hi);
   addr_t b = a + offset;
   if (m_opinfo.slow_on_page_cross && PageCrossed(a, b)) { ++m_cycles; }
   m_addr = b;

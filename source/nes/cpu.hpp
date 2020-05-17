@@ -9,6 +9,8 @@
 namespace nes {
 
 class Cpu {
+  friend class Bus;
+
 public:
   struct Registers {
     addr_t pc;  // program counter
@@ -54,6 +56,7 @@ private:
   void Decode();
   void Execute();
 
+  void RequestIrq();
   void RequestNmi();
   void HandleIrq();
   void HandleNmi();
